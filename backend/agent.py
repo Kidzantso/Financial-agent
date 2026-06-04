@@ -11,7 +11,7 @@ from langgraph.prebuilt import ToolNode
 
 from backend.config import TOOL_AGENT_PROMPT
 from backend.data import summarize_result
-from backend.tools import analyze_business_data, inspect_dataset_schema, set_tool_dataframe
+from backend.tools import get_tools
 
 
 def should_continue_tool_agent(state: MessagesState) -> str:
@@ -25,8 +25,7 @@ def run_bi_agent(question: str, api_key: str, model: str, df: pd.DataFrame) -> d
     if not api_key.strip():
         raise ValueError("Groq API key is required.")
 
-    set_tool_dataframe(df)
-    tools = [inspect_dataset_schema, analyze_business_data]
+    tools = get_tools(df)
     llm = ChatGroq(groq_api_key=api_key, model=model, temperature=0).bind_tools(tools)
 
     def call_model(state: MessagesState):

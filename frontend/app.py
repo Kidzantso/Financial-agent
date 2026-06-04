@@ -8,21 +8,27 @@ import plotly.express as px
 import streamlit as st
 
 from backend.agent import run_bi_agent
-from backend.config import DEFAULT_QUESTION, SAMPLE_DATA_PATH
+from backend.config import DEFAULT_QUESTION, SAMPLE_DATA_PATH, GROQ_MODEL_OPTIONS
 from backend.data import normalize_dataframe
 
 
 @st.cache_data
 def load_sample_data() -> pd.DataFrame:
+    """Loads and caches the default sample dataset."""
     return normalize_dataframe(pd.read_csv(SAMPLE_DATA_PATH))
 
 
 def load_uploaded_csv(uploaded_file) -> pd.DataFrame:
+    """Reads an uploaded CSV file from Streamlit and normalizes it."""
     raw = uploaded_file.getvalue().decode("utf-8")
     return normalize_dataframe(pd.read_csv(StringIO(raw)))
 
 
 def make_chart(result_df: pd.DataFrame, plan: dict):
+    """
+    Generates a Plotly chart based on the inferred chart type and axes.
+    Falls back to a bar chart if no valid match is found.
+    """
     chart_type = str(plan.get("chart_type", "bar")).lower()
     x = plan.get("chart_x")
     y = plan.get("chart_y")
@@ -45,10 +51,12 @@ def make_chart(result_df: pd.DataFrame, plan: dict):
 
 
 def render_metric(label: str, value: str) -> None:
+    """Helper to render a Streamlit metric component."""
     st.metric(label, value)
 
 
 def main() -> None:
+    """Main entry point for the Streamlit frontend UI."""
     st.set_page_config(page_title="BI Analyst Agent", layout="wide")
     st.title("AI-Powered Business Intelligence Analyst")
 
@@ -62,7 +70,7 @@ def main() -> None:
         )
         model = st.selectbox(
             "Groq model",
-            ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"],
+            GROQ_MODEL_OPTIONS,
         )
         uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
         st.caption("No upload needed: demo Q4 2025 sales data is included.")

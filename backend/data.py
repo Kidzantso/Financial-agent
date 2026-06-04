@@ -20,12 +20,20 @@ class AnalysisSummary:
 
 
 def clean_column_name(name: str) -> str:
+    """
+    Standardizes a column name by lowercasing it and replacing non-alphanumeric 
+    characters with underscores. Returns 'column' if the resulting string is empty.
+    """
     cleaned = re.sub(r"[^0-9a-zA-Z_]+", "_", name.strip().lower())
     cleaned = re.sub(r"_+", "_", cleaned).strip("_")
     return cleaned or "column"
 
 
 def normalize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Cleans all column names and attempts to parse columns containing the word 'date' 
+    into proper datetime objects.
+    """
     normalized = df.copy()
     normalized.columns = [clean_column_name(col) for col in normalized.columns]
     for col in normalized.columns:
@@ -37,6 +45,10 @@ def normalize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def dataframe_schema(df: pd.DataFrame) -> str:
+    """
+    Generates a string representation of the dataframe's schema (columns and types) 
+    along with a 5-row sample. Used to provide context to the LLM.
+    """
     lines = [f"Table name: {TABLE_NAME}", "Columns:"]
     for col, dtype in df.dtypes.items():
         lines.append(f"- {col}: {dtype}")
@@ -46,6 +58,10 @@ def dataframe_schema(df: pd.DataFrame) -> str:
 
 
 def sanitize_sql(sql: str) -> str:
+    """
+    Cleans and validates the generated SQL query. Ensures the query is a SELECT statement 
+    and does not contain malicious operations like INSERT or DROP.
+    """
     cleaned = sql.strip().strip("`")
     cleaned = re.sub(r"^sql\s*", "", cleaned, flags=re.IGNORECASE).strip()
     if not re.match(r"^\s*select\b", cleaned, flags=re.IGNORECASE):
@@ -57,6 +73,10 @@ def sanitize_sql(sql: str) -> str:
 
 
 def execute_sql_on_dataframe(df: pd.DataFrame, sql: str) -> pd.DataFrame:
+    """
+    Copies the dataframe into an in-memory SQLite database and executes the given 
+    SQL query, returning the result as a new dataframe.
+    """
     conn = sqlite3.connect(":memory:")
     try:
         sql_df = df.copy()
@@ -69,6 +89,10 @@ def execute_sql_on_dataframe(df: pd.DataFrame, sql: str) -> pd.DataFrame:
 
 
 def summarize_result(result_df: pd.DataFrame, source_df: pd.DataFrame | None = None) -> AnalysisSummary:
+    """
+    Calculates key high-level metrics (total revenue, profit, margin, etc.) from the 
+    resulting dataframe after a query has been executed.
+    """
     if result_df.empty and source_df is None:
         return AnalysisSummary(0.0, 0.0, 0.0, 0, "n/a", "n/a")
 

@@ -2,3 +2,4 @@ __pycache__/
 _refs/
 __init__.py
 sample_sales_data.csv
+.env
